@@ -43,9 +43,9 @@ class CookieConsent extends Component {
 
     const {
       buttonText,
-      cookieClassName,
-      messageClassName,
-      buttonClassName,
+      cookieClass,
+      messageClass,
+      buttonClass,
       ButtonComponent
     } = this.props;
 
