@@ -588,9 +588,9 @@ var CookieConsent = function (_Component) {
 
       var _props2 = this.props,
           buttonText = _props2.buttonText,
-          cookieClassName = _props2.cookieClassName,
-          messageClassName = _props2.messageClassName,
-          buttonClassName = _props2.buttonClassName,
+          cookieClass = _props2.cookieClass,
+          messageClass = _props2.messageClass,
+          buttonClass = _props2.buttonClass,
           ButtonComponent = _props2.ButtonComponent;
 
 
@@ -620,9 +620,9 @@ CookieConsent.propTypes = {
   children: _propTypes2.default.any, // eslint-disable-line react/forbid-prop-types
   onAccept: _propTypes2.default.func,
   buttonText: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
-  cookieClass: _propTypes2.default.onOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
-  messageClass: _propTypes2.default.onOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
-  buttonClass: _propTypes2.default.onOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
+  cookieClass: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
+  messageClass: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
+  buttonClass: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
   debug: _propTypes2.default.bool,
   expires: _propTypes2.default.number,
   ButtonComponent: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.element])
