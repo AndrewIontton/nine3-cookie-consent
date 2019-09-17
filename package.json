@@ -1,7 +1,7 @@
 {
   "name": "nine3-cookie-consent",
   "author": "93digital",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "A simplified cookie consent bar for React applications. Forked from https://github.com/Mastermindzh/react-cookie-consent",
   "main": "build/index.js",
   "types": "build/index.d.ts",
