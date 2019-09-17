@@ -62,9 +62,9 @@ CookieConsent.propTypes = {
   children: PropTypes.any, // eslint-disable-line react/forbid-prop-types
   onAccept: PropTypes.func,
   buttonText: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
-  cookieClass: PropTypes.onOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
-  messageClass: PropTypes.onOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
-  buttonClass: PropTypes.onOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
+  cookieClass: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
+  messageClass: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
+  buttonClass: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
   debug: PropTypes.bool,
   expires: PropTypes.number,
   ButtonComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.element])
