@@ -43,13 +43,16 @@ class CookieConsent extends Component {
 
     const {
       buttonText,
+      cookieClassName,
+      messageClassName,
+      buttonClassName,
       ButtonComponent
     } = this.props;
 
     return (
-      <div className="cookieConsent">
-        <div>{this.props.children}</div>
-        <ButtonComponent key="acceptButton" onClick={() => { this.accept() }}>{buttonText}</ButtonComponent>
+      <div className={cookieClass}>
+        <div className={messageClass}>{this.props.children}</div>
+        <ButtonComponent className={buttonClass} key="acceptButton" onClick={() => { this.accept() }}>{buttonText}</ButtonComponent>
       </div>
     );
   }
@@ -59,6 +62,9 @@ CookieConsent.propTypes = {
   children: PropTypes.any, // eslint-disable-line react/forbid-prop-types
   onAccept: PropTypes.func,
   buttonText: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
+  cookieClass: PropTypes.onOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
+  messageClass: PropTypes.onOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
+  buttonClass: PropTypes.onOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
   debug: PropTypes.bool,
   expires: PropTypes.number,
   ButtonComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.element])
@@ -67,7 +73,7 @@ CookieConsent.propTypes = {
 CookieConsent.defaultProps = {
   onAccept: () => {},
   buttonText: 'I understand',
-  expires: 365,
+  expires: 150,
   ButtonComponent: ({ children, ...props }) => <button {...props}>{children}</button>
 };
 

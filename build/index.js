@@ -588,20 +588,23 @@ var CookieConsent = function (_Component) {
 
       var _props2 = this.props,
           buttonText = _props2.buttonText,
+          cookieClassName = _props2.cookieClassName,
+          messageClassName = _props2.messageClassName,
+          buttonClassName = _props2.buttonClassName,
           ButtonComponent = _props2.ButtonComponent;
 
 
       return _react2.default.createElement(
         "div",
-        { className: "cookieConsent" },
+        { className: cookieClass },
         _react2.default.createElement(
           "div",
-          null,
+          { className: messageClass },
           this.props.children
         ),
         _react2.default.createElement(
           ButtonComponent,
-          { key: "acceptButton", onClick: function onClick() {
+          { className: buttonClass, key: "acceptButton", onClick: function onClick() {
               _this2.accept();
             } },
           buttonText
@@ -617,6 +620,9 @@ CookieConsent.propTypes = {
   children: _propTypes2.default.any, // eslint-disable-line react/forbid-prop-types
   onAccept: _propTypes2.default.func,
   buttonText: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
+  cookieClass: _propTypes2.default.onOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
+  messageClass: _propTypes2.default.onOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
+  buttonClass: _propTypes2.default.onOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
   debug: _propTypes2.default.bool,
   expires: _propTypes2.default.number,
   ButtonComponent: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.element])
@@ -625,7 +631,7 @@ CookieConsent.propTypes = {
 CookieConsent.defaultProps = {
   onAccept: function onAccept() {},
   buttonText: 'I understand',
-  expires: 365,
+  expires: 150,
   ButtonComponent: function ButtonComponent(_ref) {
     var children = _ref.children,
         props = _objectWithoutProperties(_ref, ["children"]);

@@ -55,12 +55,10 @@ One of the props (onAccept) is a function, this function will be called after th
 
 ## Debugging it
 
-Because the cookie consent bar will be hidden once accepted, you will have to set the prop `debug={true}` to evaluate styling changes:
+Because the cookie consent bar will be hidden once accepted, you will have to set the prop `debug` to evaluate styling changes:
 
 ```js
-<CookieConsent
-    debug={true}
->
+<CookieConsent debug>
 </CookieConsent>
 ```
 
