@@ -296,14 +296,14 @@ if (process.env.NODE_ENV === 'production') {
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
- * JavaScript Cookie v2.2.0
+ * JavaScript Cookie v2.2.1
  * https://github.com/js-cookie/js-cookie
  *
  * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
  * Released under the MIT license
  */
 ;(function (factory) {
-	var registeredInModuleLoader = false;
+	var registeredInModuleLoader;
 	if (true) {
 		!(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
@@ -337,125 +337,123 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
 		return result;
 	}
 
+	function decode (s) {
+		return s.replace(/(%[0-9A-Z]{2})+/g, decodeURIComponent);
+	}
+
 	function init (converter) {
-		function api (key, value, attributes) {
-			var result;
+		function api() {}
+
+		function set (key, value, attributes) {
 			if (typeof document === 'undefined') {
 				return;
 			}
 
-			// Write
+			attributes = extend({
+				path: '/'
+			}, api.defaults, attributes);
 
-			if (arguments.length > 1) {
-				attributes = extend({
-					path: '/'
-				}, api.defaults, attributes);
-
-				if (typeof attributes.expires === 'number') {
-					var expires = new Date();
-					expires.setMilliseconds(expires.getMilliseconds() + attributes.expires * 864e+5);
-					attributes.expires = expires;
-				}
-
-				// We're using "expires" because "max-age" is not supported by IE
-				attributes.expires = attributes.expires ? attributes.expires.toUTCString() : '';
-
-				try {
-					result = JSON.stringify(value);
-					if (/^[\{\[]/.test(result)) {
-						value = result;
-					}
-				} catch (e) {}
-
-				if (!converter.write) {
-					value = encodeURIComponent(String(value))
-						.replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
-				} else {
-					value = converter.write(value, key);
-				}
-
-				key = encodeURIComponent(String(key));
-				key = key.replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent);
-				key = key.replace(/[\(\)]/g, escape);
-
-				var stringifiedAttributes = '';
-
-				for (var attributeName in attributes) {
-					if (!attributes[attributeName]) {
-						continue;
-					}
-					stringifiedAttributes += '; ' + attributeName;
-					if (attributes[attributeName] === true) {
-						continue;
-					}
-					stringifiedAttributes += '=' + attributes[attributeName];
-				}
-				return (document.cookie = key + '=' + value + stringifiedAttributes);
+			if (typeof attributes.expires === 'number') {
+				attributes.expires = new Date(new Date() * 1 + attributes.expires * 864e+5);
 			}
 
-			// Read
+			// We're using "expires" because "max-age" is not supported by IE
+			attributes.expires = attributes.expires ? attributes.expires.toUTCString() : '';
 
-			if (!key) {
-				result = {};
+			try {
+				var result = JSON.stringify(value);
+				if (/^[\{\[]/.test(result)) {
+					value = result;
+				}
+			} catch (e) {}
+
+			value = converter.write ?
+				converter.write(value, key) :
+				encodeURIComponent(String(value))
+					.replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
+
+			key = encodeURIComponent(String(key))
+				.replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent)
+				.replace(/[\(\)]/g, escape);
+
+			var stringifiedAttributes = '';
+			for (var attributeName in attributes) {
+				if (!attributes[attributeName]) {
+					continue;
+				}
+				stringifiedAttributes += '; ' + attributeName;
+				if (attributes[attributeName] === true) {
+					continue;
+				}
+
+				// Considers RFC 6265 section 5.2:
+				// ...
+				// 3.  If the remaining unparsed-attributes contains a %x3B (";")
+				//     character:
+				// Consume the characters of the unparsed-attributes up to,
+				// not including, the first %x3B (";") character.
+				// ...
+				stringifiedAttributes += '=' + attributes[attributeName].split(';')[0];
 			}
 
+			return (document.cookie = key + '=' + value + stringifiedAttributes);
+		}
+
+		function get (key, json) {
+			if (typeof document === 'undefined') {
+				return;
+			}
+
+			var jar = {};
 			// To prevent the for loop in the first place assign an empty array
-			// in case there are no cookies at all. Also prevents odd result when
-			// calling "get()"
+			// in case there are no cookies at all.
 			var cookies = document.cookie ? document.cookie.split('; ') : [];
-			var rdecode = /(%[0-9A-Z]{2})+/g;
 			var i = 0;
 
 			for (; i < cookies.length; i++) {
 				var parts = cookies[i].split('=');
 				var cookie = parts.slice(1).join('=');
 
-				if (!this.json && cookie.charAt(0) === '"') {
+				if (!json && cookie.charAt(0) === '"') {
 					cookie = cookie.slice(1, -1);
 				}
 
 				try {
-					var name = parts[0].replace(rdecode, decodeURIComponent);
-					cookie = converter.read ?
-						converter.read(cookie, name) : converter(cookie, name) ||
-						cookie.replace(rdecode, decodeURIComponent);
+					var name = decode(parts[0]);
+					cookie = (converter.read || converter)(cookie, name) ||
+						decode(cookie);
 
-					if (this.json) {
+					if (json) {
 						try {
 							cookie = JSON.parse(cookie);
 						} catch (e) {}
 					}
 
-					if (key === name) {
-						result = cookie;
-						break;
-					}
+					jar[name] = cookie;
 
-					if (!key) {
-						result[name] = cookie;
+					if (key === name) {
+						break;
 					}
 				} catch (e) {}
 			}
 
-			return result;
+			return key ? jar[key] : jar;
 		}
 
-		api.set = api;
+		api.set = set;
 		api.get = function (key) {
-			return api.call(api, key);
+			return get(key, false /* read as raw */);
 		};
-		api.getJSON = function () {
-			return api.apply({
-				json: true
-			}, [].slice.call(arguments));
+		api.getJSON = function (key) {
+			return get(key, true /* read as json */);
 		};
-		api.defaults = {};
-
 		api.remove = function (key, attributes) {
-			api(key, '', extend(attributes, {
+			set(key, '', extend(attributes, {
 				expires: -1
 			}));
 		};
+
+		api.defaults = {};
 
 		api.withConverter = init;
 
@@ -508,9 +506,7 @@ module.exports = require("react");
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Cookies = exports.OPTIONS = undefined;
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+exports.Cookies = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -536,12 +532,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var OPTIONS = exports.OPTIONS = {
-  TOP: "top",
-  BOTTOM: "bottom",
-  NONE: "none"
-};
-
 var CookieConsent = function (_Component) {
   _inherits(CookieConsent, _Component);
 
@@ -551,95 +541,21 @@ var CookieConsent = function (_Component) {
     var _this = _possibleConstructorReturn(this, (CookieConsent.__proto__ || Object.getPrototypeOf(CookieConsent)).call(this, props));
 
     _this.accept.bind(_this);
-
     _this.state = {
-      visible: false,
-      style: {
-        alignItems: "baseline",
-        background: "#353535",
-        color: "white",
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "space-between",
-        left: "0",
-        position: "fixed",
-        width: "100%",
-        zIndex: "999"
-      },
-      buttonStyle: {
-        background: "#ffd42d",
-        border: "0",
-        borderRadius: "0px",
-        boxShadow: "none",
-        color: "black",
-        cursor: "pointer",
-        flex: "0 0 auto",
-        padding: "5px 10px",
-        margin: "15px"
-      },
-      declineButtonStyle: {
-        background: "#c12a2a",
-        border: "0",
-        borderRadius: "0px",
-        boxShadow: "none",
-        color: "#e5e5e5",
-        cursor: "pointer",
-        flex: "0 0 auto",
-        padding: "5px 10px",
-        margin: "15px"
-      },
-      contentStyle: {
-        flex: "1 0 300px",
-        margin: "15px"
-      }
+      visible: false
     };
-
-    _this.handleScroll = _this.handleScroll.bind(_this);
     return _this;
   }
 
   _createClass(CookieConsent, [{
     key: "componentDidMount",
     value: function componentDidMount() {
-      var _props = this.props,
-          cookieName = _props.cookieName,
-          debug = _props.debug;
+      var debug = this.props.debug;
 
       // if cookie undefined or debug
 
-      if (_jsCookie2.default.get(cookieName) === undefined || debug) {
+      if (_jsCookie2.default.get('CookieConsent') === undefined || debug) {
         this.setState({ visible: true });
-      }
-
-      // if acceptOnScroll is set to true and (cookie is undefined or debug is set to true), add a listener.
-      if (this.props.acceptOnScroll && (_jsCookie2.default.get(cookieName) === undefined || debug)) {
-        window.addEventListener("scroll", this.handleScroll, { passive: true });
-      }
-    }
-  }, {
-    key: "componentWillUnmount",
-    value: function componentWillUnmount() {
-      // remove listener if still set
-      window.removeEventListener("scroll", this.handleScroll);
-    }
-
-    /**
-     * checks whether scroll has exceeded set amount and fire accept if so.
-     */
-
-  }, {
-    key: "handleScroll",
-    value: function handleScroll() {
-      // (top / height) - height * 100
-      var rootNode = document.documentElement,
-          body = document.body,
-          top = "scrollTop",
-          height = "scrollHeight";
-
-      var percentage = (rootNode[top] || body[top]) / ((rootNode[height] || body[height]) - rootNode.clientHeight) * 100;
-
-      if (percentage > this.props.acceptOnScrollPercentage) {
-        this.accept();
       }
     }
 
@@ -650,58 +566,15 @@ var CookieConsent = function (_Component) {
   }, {
     key: "accept",
     value: function accept() {
-      var _props2 = this.props,
-          cookieName = _props2.cookieName,
-          cookieValue = _props2.cookieValue,
-          expires = _props2.expires,
-          hideOnAccept = _props2.hideOnAccept,
-          onAccept = _props2.onAccept,
-          extraCookieOptions = _props2.extraCookieOptions;
+      var _props = this.props,
+          expires = _props.expires,
+          onAccept = _props.onAccept;
 
       // fire onAccept
 
       onAccept();
-
-      // remove listener if set
-      window.removeEventListener("scroll", this.handleScroll);
-
-      _jsCookie2.default.set(cookieName, cookieValue, _extends({ expires: expires }, extraCookieOptions));
-
-      if (hideOnAccept) {
-        this.setState({ visible: false });
-      }
-    }
-
-    /**
-     * Set a persistent decline cookie
-     */
-
-  }, {
-    key: "decline",
-    value: function decline() {
-      var _props3 = this.props,
-          cookieName = _props3.cookieName,
-          declineCookieValue = _props3.declineCookieValue,
-          expires = _props3.expires,
-          hideOnDecline = _props3.hideOnDecline,
-          onDecline = _props3.onDecline,
-          extraCookieOptions = _props3.extraCookieOptions,
-          setDeclineCookie = _props3.setDeclineCookie;
-
-      // fire onDecline
-
-      onDecline();
-
-      // remove listener if set
-      window.removeEventListener("scroll", this.handleScroll);
-
-      if (setDeclineCookie) {
-        _jsCookie2.default.set(cookieName, declineCookieValue, _extends({ expires: expires }, extraCookieOptions));
-      }
-
-      if (hideOnDecline) {
-        this.setState({ visible: false });
-      }
+      _jsCookie2.default.set('CookieConsent', true, { expires: expires });
+      this.setState({ visible: false });
     }
   }, {
     key: "render",
@@ -713,111 +586,26 @@ var CookieConsent = function (_Component) {
         return null;
       }
 
-      var _props4 = this.props,
-          location = _props4.location,
-          style = _props4.style,
-          buttonStyle = _props4.buttonStyle,
-          declineButtonStyle = _props4.declineButtonStyle,
-          contentStyle = _props4.contentStyle,
-          disableStyles = _props4.disableStyles,
-          buttonText = _props4.buttonText,
-          declineButtonText = _props4.declineButtonText,
-          containerClasses = _props4.containerClasses,
-          contentClasses = _props4.contentClasses,
-          buttonClasses = _props4.buttonClasses,
-          declineButtonClasses = _props4.declineButtonClasses,
-          buttonId = _props4.buttonId,
-          declineButtonId = _props4.declineButtonId,
-          disableButtonStyles = _props4.disableButtonStyles,
-          enableDeclineButton = _props4.enableDeclineButton,
-          flipButtons = _props4.flipButtons,
-          ButtonComponent = _props4.ButtonComponent;
+      var _props2 = this.props,
+          buttonText = _props2.buttonText,
+          ButtonComponent = _props2.ButtonComponent;
 
-
-      var myStyle = {};
-      var myButtonStyle = {};
-      var myDeclineButtonStyle = {};
-      var myContentStyle = {};
-
-      if (disableStyles) {
-        // if styles are disabled use the provided styles (or none)
-        myStyle = _extends({}, style);
-        myButtonStyle = _extends({}, buttonStyle);
-        myDeclineButtonStyle = _extends({}, declineButtonStyle);
-        myContentStyle = _extends({}, contentStyle);
-      } else {
-        // if styles aren't disabled merge them with the styles that are provided (or use default styles)
-        myStyle = _extends({}, _extends({}, this.state.style, style));
-        myContentStyle = _extends({}, _extends({}, this.state.contentStyle, contentStyle));
-
-        // switch to disable JUST the button styles
-        if (disableButtonStyles) {
-          myButtonStyle = _extends({}, buttonStyle);
-          myDeclineButtonStyle = _extends({}, declineButtonStyle);
-        } else {
-          myButtonStyle = _extends({}, _extends({}, this.state.buttonStyle, buttonStyle));
-          myDeclineButtonStyle = _extends({}, _extends({}, this.state.declineButtonStyle, declineButtonStyle));
-        }
-      }
-
-      // syntactic sugar to enable user to easily select top / bottom
-      switch (location) {
-        case OPTIONS.TOP:
-          myStyle.top = "0";
-          break;
-
-        case OPTIONS.BOTTOM:
-          myStyle.bottom = "0";
-          break;
-      }
-
-      var buttonsToRender = [];
-
-      // add decline button
-      enableDeclineButton && buttonsToRender.push(_react2.default.createElement(
-        ButtonComponent,
-        {
-          key: "declineButton",
-          style: myDeclineButtonStyle,
-          className: declineButtonClasses,
-          id: declineButtonId,
-          onClick: function onClick() {
-            _this2.decline();
-          }
-        },
-        declineButtonText
-      ));
-
-      // add accept button
-      buttonsToRender.push(_react2.default.createElement(
-        ButtonComponent,
-        {
-          key: "acceptButton",
-          style: myButtonStyle,
-          className: buttonClasses,
-          id: buttonId,
-          onClick: function onClick() {
-            _this2.accept();
-          }
-        },
-        buttonText
-      ));
-
-      if (flipButtons) {
-        buttonsToRender.reverse();
-      }
 
       return _react2.default.createElement(
         "div",
-        { className: "cookieConsent " + containerClasses, style: myStyle },
+        { className: "cookieConsent" },
         _react2.default.createElement(
           "div",
-          { style: myContentStyle, className: contentClasses },
+          null,
           this.props.children
         ),
-        buttonsToRender.map(function (button) {
-          return button;
-        })
+        _react2.default.createElement(
+          ButtonComponent,
+          { key: "acceptButton", onClick: function onClick() {
+              _this2.accept();
+            } },
+          buttonText
+        )
       );
     }
   }]);
@@ -826,69 +614,18 @@ var CookieConsent = function (_Component) {
 }(_react.Component);
 
 CookieConsent.propTypes = {
-  location: _propTypes2.default.oneOf(Object.keys(OPTIONS).map(function (key) {
-    return OPTIONS[key];
-  })),
-  style: _propTypes2.default.object,
-  buttonStyle: _propTypes2.default.object,
-  declineButtonStyle: _propTypes2.default.object,
-  contentStyle: _propTypes2.default.object,
   children: _propTypes2.default.any, // eslint-disable-line react/forbid-prop-types
-  disableStyles: _propTypes2.default.bool,
-  hideOnAccept: _propTypes2.default.bool,
-  hideOnDecline: _propTypes2.default.bool,
   onAccept: _propTypes2.default.func,
-  onDecline: _propTypes2.default.func,
   buttonText: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
-  declineButtonText: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
-  cookieName: _propTypes2.default.string,
-  cookieValue: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.bool, _propTypes2.default.number]),
-  declineCookieValue: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.bool, _propTypes2.default.number]),
-  setDeclineCookie: _propTypes2.default.bool,
   debug: _propTypes2.default.bool,
   expires: _propTypes2.default.number,
-  containerClasses: _propTypes2.default.string,
-  contentClasses: _propTypes2.default.string,
-  buttonClasses: _propTypes2.default.string,
-  declineButtonClasses: _propTypes2.default.string,
-  buttonId: _propTypes2.default.string,
-  declineButtonId: _propTypes2.default.string,
-  acceptOnScroll: _propTypes2.default.bool,
-  acceptOnScrollPercentage: _propTypes2.default.number,
-  extraCookieOptions: _propTypes2.default.object,
-  disableButtonStyles: _propTypes2.default.bool,
-  enableDeclineButton: _propTypes2.default.bool,
-  flipButtons: _propTypes2.default.bool,
   ButtonComponent: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.element])
 };
 
 CookieConsent.defaultProps = {
-  disableStyles: false,
-  hideOnAccept: true,
-  hideOnDecline: true,
-  acceptOnScroll: false,
-  acceptOnScrollPercentage: 25,
-  location: OPTIONS.BOTTOM,
   onAccept: function onAccept() {},
-  onDecline: function onDecline() {},
-  cookieName: "CookieConsent",
-  cookieValue: true,
-  declineCookieValue: false,
-  setDeclineCookie: true,
-  buttonText: "I understand",
-  declineButtonText: "I decline",
-  debug: false,
+  buttonText: 'I understand',
   expires: 365,
-  containerClasses: "",
-  contentClasses: "",
-  buttonClasses: "",
-  declineButtonClasses: "",
-  buttonId: "",
-  declineButtonId: "",
-  extraCookieOptions: {},
-  disableButtonStyles: false,
-  enableDeclineButton: false,
-  flipButtons: false,
   ButtonComponent: function ButtonComponent(_ref) {
     var children = _ref.children,
         props = _objectWithoutProperties(_ref, ["children"]);
@@ -1786,7 +1523,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/** @license React v16.8.6
+/* WEBPACK VAR INJECTION */(function(process) {/** @license React v16.9.0
  * react-is.development.js
  *
  * Copyright (c) Facebook, Inc. and its affiliates.
@@ -1816,17 +1553,22 @@ var REACT_STRICT_MODE_TYPE = hasSymbol ? Symbol.for('react.strict_mode') : 0xeac
 var REACT_PROFILER_TYPE = hasSymbol ? Symbol.for('react.profiler') : 0xead2;
 var REACT_PROVIDER_TYPE = hasSymbol ? Symbol.for('react.provider') : 0xeacd;
 var REACT_CONTEXT_TYPE = hasSymbol ? Symbol.for('react.context') : 0xeace;
+// TODO: We don't use AsyncMode or ConcurrentMode anymore. They were temporary
+// (unstable) APIs that have been removed. Can we remove the symbols?
 var REACT_ASYNC_MODE_TYPE = hasSymbol ? Symbol.for('react.async_mode') : 0xeacf;
 var REACT_CONCURRENT_MODE_TYPE = hasSymbol ? Symbol.for('react.concurrent_mode') : 0xeacf;
 var REACT_FORWARD_REF_TYPE = hasSymbol ? Symbol.for('react.forward_ref') : 0xead0;
 var REACT_SUSPENSE_TYPE = hasSymbol ? Symbol.for('react.suspense') : 0xead1;
+var REACT_SUSPENSE_LIST_TYPE = hasSymbol ? Symbol.for('react.suspense_list') : 0xead8;
 var REACT_MEMO_TYPE = hasSymbol ? Symbol.for('react.memo') : 0xead3;
 var REACT_LAZY_TYPE = hasSymbol ? Symbol.for('react.lazy') : 0xead4;
+var REACT_FUNDAMENTAL_TYPE = hasSymbol ? Symbol.for('react.fundamental') : 0xead5;
+var REACT_RESPONDER_TYPE = hasSymbol ? Symbol.for('react.responder') : 0xead6;
 
 function isValidElementType(type) {
   return typeof type === 'string' || typeof type === 'function' ||
   // Note: its typeof might be other than 'symbol' or 'number' if it's a polyfill.
-  type === REACT_FRAGMENT_TYPE || type === REACT_CONCURRENT_MODE_TYPE || type === REACT_PROFILER_TYPE || type === REACT_STRICT_MODE_TYPE || type === REACT_SUSPENSE_TYPE || typeof type === 'object' && type !== null && (type.$$typeof === REACT_LAZY_TYPE || type.$$typeof === REACT_MEMO_TYPE || type.$$typeof === REACT_PROVIDER_TYPE || type.$$typeof === REACT_CONTEXT_TYPE || type.$$typeof === REACT_FORWARD_REF_TYPE);
+  type === REACT_FRAGMENT_TYPE || type === REACT_CONCURRENT_MODE_TYPE || type === REACT_PROFILER_TYPE || type === REACT_STRICT_MODE_TYPE || type === REACT_SUSPENSE_TYPE || type === REACT_SUSPENSE_LIST_TYPE || typeof type === 'object' && type !== null && (type.$$typeof === REACT_LAZY_TYPE || type.$$typeof === REACT_MEMO_TYPE || type.$$typeof === REACT_PROVIDER_TYPE || type.$$typeof === REACT_CONTEXT_TYPE || type.$$typeof === REACT_FORWARD_REF_TYPE || type.$$typeof === REACT_FUNDAMENTAL_TYPE || type.$$typeof === REACT_RESPONDER_TYPE);
 }
 
 /**
@@ -2021,7 +1763,7 @@ exports.isSuspense = isSuspense;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/** @license React v16.8.6
+/** @license React v16.9.0
  * react-is.production.min.js
  *
  * Copyright (c) Facebook, Inc. and its affiliates.
@@ -2031,11 +1773,11 @@ exports.isSuspense = isSuspense;
  */
 
 Object.defineProperty(exports,"__esModule",{value:!0});
-var b="function"===typeof Symbol&&Symbol.for,c=b?Symbol.for("react.element"):60103,d=b?Symbol.for("react.portal"):60106,e=b?Symbol.for("react.fragment"):60107,f=b?Symbol.for("react.strict_mode"):60108,g=b?Symbol.for("react.profiler"):60114,h=b?Symbol.for("react.provider"):60109,k=b?Symbol.for("react.context"):60110,l=b?Symbol.for("react.async_mode"):60111,m=b?Symbol.for("react.concurrent_mode"):60111,n=b?Symbol.for("react.forward_ref"):60112,p=b?Symbol.for("react.suspense"):60113,q=b?Symbol.for("react.memo"):
-60115,r=b?Symbol.for("react.lazy"):60116;function t(a){if("object"===typeof a&&null!==a){var u=a.$$typeof;switch(u){case c:switch(a=a.type,a){case l:case m:case e:case g:case f:case p:return a;default:switch(a=a&&a.$$typeof,a){case k:case n:case h:return a;default:return u}}case r:case q:case d:return u}}}function v(a){return t(a)===m}exports.typeOf=t;exports.AsyncMode=l;exports.ConcurrentMode=m;exports.ContextConsumer=k;exports.ContextProvider=h;exports.Element=c;exports.ForwardRef=n;
-exports.Fragment=e;exports.Lazy=r;exports.Memo=q;exports.Portal=d;exports.Profiler=g;exports.StrictMode=f;exports.Suspense=p;exports.isValidElementType=function(a){return"string"===typeof a||"function"===typeof a||a===e||a===m||a===g||a===f||a===p||"object"===typeof a&&null!==a&&(a.$$typeof===r||a.$$typeof===q||a.$$typeof===h||a.$$typeof===k||a.$$typeof===n)};exports.isAsyncMode=function(a){return v(a)||t(a)===l};exports.isConcurrentMode=v;exports.isContextConsumer=function(a){return t(a)===k};
-exports.isContextProvider=function(a){return t(a)===h};exports.isElement=function(a){return"object"===typeof a&&null!==a&&a.$$typeof===c};exports.isForwardRef=function(a){return t(a)===n};exports.isFragment=function(a){return t(a)===e};exports.isLazy=function(a){return t(a)===r};exports.isMemo=function(a){return t(a)===q};exports.isPortal=function(a){return t(a)===d};exports.isProfiler=function(a){return t(a)===g};exports.isStrictMode=function(a){return t(a)===f};
-exports.isSuspense=function(a){return t(a)===p};
+var b="function"===typeof Symbol&&Symbol.for,c=b?Symbol.for("react.element"):60103,d=b?Symbol.for("react.portal"):60106,e=b?Symbol.for("react.fragment"):60107,f=b?Symbol.for("react.strict_mode"):60108,g=b?Symbol.for("react.profiler"):60114,h=b?Symbol.for("react.provider"):60109,k=b?Symbol.for("react.context"):60110,l=b?Symbol.for("react.async_mode"):60111,m=b?Symbol.for("react.concurrent_mode"):60111,n=b?Symbol.for("react.forward_ref"):60112,p=b?Symbol.for("react.suspense"):60113,q=b?Symbol.for("react.suspense_list"):
+60120,r=b?Symbol.for("react.memo"):60115,t=b?Symbol.for("react.lazy"):60116,v=b?Symbol.for("react.fundamental"):60117,w=b?Symbol.for("react.responder"):60118;function x(a){if("object"===typeof a&&null!==a){var u=a.$$typeof;switch(u){case c:switch(a=a.type,a){case l:case m:case e:case g:case f:case p:return a;default:switch(a=a&&a.$$typeof,a){case k:case n:case h:return a;default:return u}}case t:case r:case d:return u}}}function y(a){return x(a)===m}exports.typeOf=x;exports.AsyncMode=l;
+exports.ConcurrentMode=m;exports.ContextConsumer=k;exports.ContextProvider=h;exports.Element=c;exports.ForwardRef=n;exports.Fragment=e;exports.Lazy=t;exports.Memo=r;exports.Portal=d;exports.Profiler=g;exports.StrictMode=f;exports.Suspense=p;
+exports.isValidElementType=function(a){return"string"===typeof a||"function"===typeof a||a===e||a===m||a===g||a===f||a===p||a===q||"object"===typeof a&&null!==a&&(a.$$typeof===t||a.$$typeof===r||a.$$typeof===h||a.$$typeof===k||a.$$typeof===n||a.$$typeof===v||a.$$typeof===w)};exports.isAsyncMode=function(a){return y(a)||x(a)===l};exports.isConcurrentMode=y;exports.isContextConsumer=function(a){return x(a)===k};exports.isContextProvider=function(a){return x(a)===h};
+exports.isElement=function(a){return"object"===typeof a&&null!==a&&a.$$typeof===c};exports.isForwardRef=function(a){return x(a)===n};exports.isFragment=function(a){return x(a)===e};exports.isLazy=function(a){return x(a)===t};exports.isMemo=function(a){return x(a)===r};exports.isPortal=function(a){return x(a)===d};exports.isProfiler=function(a){return x(a)===g};exports.isStrictMode=function(a){return x(a)===f};exports.isSuspense=function(a){return x(a)===p};
 
 
 /***/ })
