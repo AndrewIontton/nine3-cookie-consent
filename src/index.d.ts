@@ -6,6 +6,7 @@ export interface CookieConsentProps {
   onAccept?: Function;
   buttonText?: Function | React.ReactNode;
   cookieClass?: string;
+  containerClass?: string;
   messageClass?: string;
   buttonClass?: string;
   debug?: boolean;

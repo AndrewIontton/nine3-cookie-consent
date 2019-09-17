@@ -589,6 +589,7 @@ var CookieConsent = function (_Component) {
       var _props2 = this.props,
           buttonText = _props2.buttonText,
           cookieClass = _props2.cookieClass,
+          containerClass = _props2.containerClass,
           messageClass = _props2.messageClass,
           buttonClass = _props2.buttonClass,
           ButtonComponent = _props2.ButtonComponent;
@@ -599,15 +600,19 @@ var CookieConsent = function (_Component) {
         { className: cookieClass },
         _react2.default.createElement(
           "div",
-          { className: messageClass },
-          this.props.children
-        ),
-        _react2.default.createElement(
-          ButtonComponent,
-          { className: buttonClass, key: "acceptButton", onClick: function onClick() {
-              _this2.accept();
-            } },
-          buttonText
+          { className: containerClass },
+          _react2.default.createElement(
+            "div",
+            { className: messageClass },
+            this.props.children
+          ),
+          _react2.default.createElement(
+            ButtonComponent,
+            { className: buttonClass, key: "acceptButton", onClick: function onClick() {
+                _this2.accept();
+              } },
+            buttonText
+          )
         )
       );
     }
@@ -621,6 +626,7 @@ CookieConsent.propTypes = {
   onAccept: _propTypes2.default.func,
   buttonText: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
   cookieClass: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
+  containerClass: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
   messageClass: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
   buttonClass: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
   debug: _propTypes2.default.bool,

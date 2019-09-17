@@ -44,6 +44,7 @@ class CookieConsent extends Component {
     const {
       buttonText,
       cookieClass,
+      containerClass,
       messageClass,
       buttonClass,
       ButtonComponent
@@ -51,8 +52,10 @@ class CookieConsent extends Component {
 
     return (
       <div className={cookieClass}>
-        <div className={messageClass}>{this.props.children}</div>
-        <ButtonComponent className={buttonClass} key="acceptButton" onClick={() => { this.accept() }}>{buttonText}</ButtonComponent>
+        <div className={containerClass}>
+          <div className={messageClass}>{this.props.children}</div>
+          <ButtonComponent className={buttonClass} key="acceptButton" onClick={() => { this.accept() }}>{buttonText}</ButtonComponent>
+        </div>
       </div>
     );
   }
@@ -63,6 +66,7 @@ CookieConsent.propTypes = {
   onAccept: PropTypes.func,
   buttonText: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
   cookieClass: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
+  containerClass: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
   messageClass: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
   buttonClass: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.element]),
   debug: PropTypes.bool,
